@@ -350,7 +350,7 @@ let currentYear = 1800;
 let currentMode = "folded";
 let currentAngle = 90;
 
-// ── WebSocket ─────────────────────────────────────────────────────────────────
+// WebSocket
 function connect() {
   const host = location.hostname || "localhost";
   ws = new WebSocket(`ws://${host}:${location.port || 3000}/ws`);
@@ -377,7 +377,7 @@ function wsSend(obj) {
   }
 }
 
-// ── Year ──────────────────────────────────────────────────────────────────────
+// Year 
 function onYearInput(val) {
   const y = parseInt(val);
   applyYear(y);
@@ -414,7 +414,7 @@ function stopHold() {
   holdInterval = null;
 }
 
-// ── Mode ──────────────────────────────────────────────────────────────────────
+// Mode 
 function setMode(mode) {
   const angle = mode === "folded" ? 90 : 180;
   applyMode(mode, angle);
@@ -428,7 +428,7 @@ function applyMode(mode, angle) {
   if (angle !== undefined) applyAngle(angle);
 }
 
-// ── Angle ─────────────────────────────────────────────────────────────────────
+// Angle 
 function onAngleInput(val) {
   const a = parseInt(val);
   applyAngle(a);
@@ -458,7 +458,7 @@ function applyAngle(angle) {
     angle >= 180 ? `flat · ${speed} yr/s`   : `partial · ${speed} yr/s`;
 }
 
-// ── Log ───────────────────────────────────────────────────────────────────────
+// Log 
 function log(type, detail, outgoing = false) {
   const el = document.createElement("div");
   el.className = "log-entry";
@@ -470,7 +470,7 @@ function log(type, detail, outgoing = false) {
   while (logEl.children.length > 30) logEl.removeChild(logEl.lastChild);
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
+
 connect();
 applyAngle(90);
 </script>

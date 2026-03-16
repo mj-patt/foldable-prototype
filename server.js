@@ -1,7 +1,5 @@
 /**
  * Foldable Prototype – WebSocket Relay Server
- * Pure Node.js, zero dependencies.
- *
  * Start: node server.js
  * Serves static files from ./public on http://localhost:3000
  * WebSocket on ws://localhost:3000/ws

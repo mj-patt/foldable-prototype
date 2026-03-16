@@ -135,14 +135,21 @@ document.getElementById("flat-year-hud").textContent = bootYear;
 const REGION_COLORS = ["#e8603c","#f5c842","#7ecba1","#5b9bd5"];
 
 function buildSpec() {
+  const W = window.innerWidth * 2;
+  const H = window.innerHeight;
   return {
     $schema: "https://vega.github.io/schema/vega/v5.json",
     background: "transparent",
     padding: { left: 2, right: 20, top: 10, bottom: 44 },
+    // signals: [
+    //   { name: "currentYear", value: currentYear },
+    //   { name: "chartWidth",  update: "containerSize()[0]" },
+    //   { name: "chartHeight", update: "containerSize()[1]" },
+    // ],
     signals: [
       { name: "currentYear", value: currentYear },
-      { name: "chartWidth",  update: "containerSize()[0]" },
-      { name: "chartHeight", update: "containerSize()[1]" },
+      { name: "chartWidth",  value: W },
+      { name: "chartHeight", value: H },
     ],
     width:    { signal: "chartWidth" },
     height:   { signal: "chartHeight" },
