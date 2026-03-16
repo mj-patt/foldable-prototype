@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foldable Controller</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #080b10;
+    --surface:  #0d1117;
+    --surface2: #161b22;
+    --border:   #21262d;
+    --border2:  #30363d;
+    --text:     #e6edf3;
+    --muted:    #7d8590;
+    --accent:   #58a6ff;
+    --orange:   #d29922;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: sans-serif;
+    font-size: 13px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .logo-text {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 20px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Mode toggle ── */
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .mode-btn {
+    padding: 14px 8px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .mode-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  .mode-btn.active {
+    background: rgba(88,166,255,0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Angle control ── */
+  .angle-display {
+    font-size: 48px;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    text-align: center;
+    margin: 12px 0;
+    line-height: 1;
+  }
+
+  .angle-display sup {
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--muted);
+    vertical-align: super;
+  }
+
+  .angle-sub {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .angle-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(
+      to right,
+      var(--accent) 0%,
+      var(--accent) var(--pct, 0%),
+      var(--border) var(--pct, 0%),
+      var(--border) 100%
+    );
+    outline: none;
+    cursor: pointer;
+  }
+
+  .angle-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text);
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.2);
+    cursor: grab;
+  }
+
+  .angle-presets {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .preset-btn {
+    flex: 1;
+    padding: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .preset-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  .preset-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(88,166,255,0.06);
+  }
+
+  /* ── Year control ── */
+  .year-display {
+    font-size: 52px;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    text-align: center;
+    margin: 8px 0;
+    line-height: 1;
+  }
+
+  .year-range-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+    margin: 12px 0 6px;
+  }
+
+  .year-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+    cursor: grab;
+  }
+
+  .year-range-slider:active::-webkit-slider-thumb { cursor: grabbing; }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .stepper-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .step-btn {
+    flex: 1;
+    padding: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .step-btn:hover { background: var(--border); }
+  .step-btn:active { transform: scale(0.96); }
+
+  /* ── Event log ── */
+  .log-card { grid-column: 1 / -1; max-height: 120px; }
+
+  #event-log {
+    max-height: 80px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+  }
+
+  .log-entry {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .log-entry .ts   { color: var(--border2); margin-right: 6px; }
+  .log-entry .type { margin-right: 4px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">Foldable Device Controller</div>
+</header>
+
+<div class="layout">
+
+  <div class="card">
+    <div class="card-title">Device State</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-folded" onclick="setMode('folded')">Folded</button>
+      <button class="mode-btn" id="btn-flat" onclick="setMode('flat')">Flat</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fold Angle</div>
+    <div class="angle-display" id="angle-display">90<sup>°</sup></div>
+    <div class="angle-sub" id="angle-sub">folded · fast scrub</div>
+    <input type="range" class="angle-slider" id="angle-slider"
+           min="0" max="180" value="90" step="1"
+           oninput="onAngleInput(this.value)">
+    <div class="angle-presets">
+      <button class="preset-btn active" onclick="setAngle(90)">90°</button>
+      <button class="preset-btn" onclick="setAngle(120)">120°</button>
+      <button class="preset-btn" onclick="setAngle(150)">150°</button>
+      <button class="preset-btn" onclick="setAngle(180)">180°</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Year</div>
+    <div class="year-display" id="year-display">1800</div>
+    <input type="range" class="year-range-slider" id="year-slider"
+           min="1800" max="2023" value="1800" step="1"
+           oninput="onYearInput(this.value)">
+    <div class="range-labels"><span>1800</span><span>2023</span></div>
+    <div class="stepper-row">
+      <button class="step-btn" onclick="stepYear(-10)">−10</button>
+      <button class="step-btn" onclick="stepYear(-1)">−1</button>
+      <button class="step-btn" onclick="stepYear(1)">+1</button>
+      <button class="step-btn" onclick="stepYear(10)">+10</button>
+    </div>
+    <div class="stepper-row" style="margin-top: 8px;">
+      <button class="step-btn"
+        id="btn-backward"
+        onpointerdown="startHold(-1)"
+        onpointerup="stopHold()"
+        onpointerleave="stopHold()"
+        onpointercancel="stopHold()"> ← hold</button>
+      <button class="step-btn"
+        id="btn-forward"
+        onpointerdown="startHold(1)"
+        onpointerup="stopHold()"
+        onpointerleave="stopHold()"
+        onpointercancel="stopHold()">hold → </button>
+    </div>
+  </div>
+
+  <div class="card log-card">
+    <div class="card-title">Event Log</div>
+    <div id="event-log"></div>
+  </div>
+
+</div>
+
+<script>
+let ws = null;
+let currentYear = 1800;
+let currentMode = "folded";
+let currentAngle = 90;
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+function connect() {
+  const host = location.hostname || "localhost";
+  ws = new WebSocket(`ws://${host}:${location.port || 3000}/ws`);
+
+  ws.onopen = () => wsSend({ type: "getState" });
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if      (msg.type === "state") { applyYear(msg.year); applyMode(msg.mode, msg.angle); }
+    else if (msg.type === "year")  { applyYear(msg.year); }
+    else if (msg.type === "mode")  { applyMode(msg.mode, msg.angle); }
+    else if (msg.type === "angle") { applyAngle(msg.angle); }
+    log(msg.type, JSON.stringify(msg));
+  };
+
+  ws.onclose = () => setTimeout(connect, 2000);
+  ws.onerror = () => ws.close();
+}
+
+function wsSend(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj));
+    log("→ " + obj.type, JSON.stringify(obj), true);
+  }
+}
+
+// ── Year ──────────────────────────────────────────────────────────────────────
+function onYearInput(val) {
+  const y = parseInt(val);
+  applyYear(y);
+  wsSend({ type: "setYear", year: y });
+}
+
+function stepYear(delta) {
+  const y = Math.max(1800, Math.min(2023, currentYear + delta));
+  applyYear(y);
+  document.getElementById("year-slider").value = y;
+  wsSend({ type: "setYear", year: y });
+}
+
+function applyYear(year) {
+  currentYear = Math.round(year);
+  document.getElementById("year-display").textContent = currentYear;
+  document.getElementById("year-slider").value = currentYear;
+}
+
+let holdInterval = null;
+
+function startHold(direction) {
+  stopHold();
+  const msPerYear = 1000 / (4 - ((currentAngle - 90) / 90) * 3);
+  holdInterval = setInterval(() => {
+    const y = Math.max(1800, Math.min(2023, currentYear + direction));
+    applyYear(y);
+    wsSend({ type: "setYear", year: y });
+  }, msPerYear);
+}
+
+function stopHold() {
+  clearInterval(holdInterval);
+  holdInterval = null;
+}
+
+// ── Mode ──────────────────────────────────────────────────────────────────────
+function setMode(mode) {
+  const angle = mode === "folded" ? 90 : 180;
+  applyMode(mode, angle);
+  wsSend({ type: "setMode", mode, angle });
+}
+
+function applyMode(mode, angle) {
+  currentMode = mode;
+  document.getElementById("btn-folded").classList.toggle("active", mode === "folded");
+  document.getElementById("btn-flat").classList.toggle("active", mode === "flat");
+  if (angle !== undefined) applyAngle(angle);
+}
+
+// ── Angle ─────────────────────────────────────────────────────────────────────
+function onAngleInput(val) {
+  const a = parseInt(val);
+  applyAngle(a);
+  wsSend({ type: "setAngle", angle: a });
+}
+
+function setAngle(a) {
+  applyAngle(a);
+  document.getElementById("angle-slider").value = a;
+  wsSend({ type: "setAngle", angle: a });
+}
+
+function applyAngle(angle) {
+  currentAngle = angle;
+  document.getElementById("angle-display").innerHTML = angle + "<sup>°</sup>";
+  document.getElementById("angle-slider").value = angle;
+  document.getElementById("angle-slider").style.setProperty("--pct", (angle / 180 * 100) + "%");
+
+  document.querySelectorAll(".preset-btn").forEach(b => {
+    b.classList.toggle("active", parseInt(b.textContent) === angle);
+  });
+
+  const t = (angle - 90) / 90;
+  const speed = Math.round(4 - t * 3);
+  document.getElementById("angle-sub").textContent =
+    angle <= 90  ? `folded · ${speed} yr/s` :
+    angle >= 180 ? `flat · ${speed} yr/s`   : `partial · ${speed} yr/s`;
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────────
+function log(type, detail, outgoing = false) {
+  const el = document.createElement("div");
+  el.className = "log-entry";
+  const now = new Date();
+  const ts = now.toTimeString().slice(0,8) + "." + String(now.getMilliseconds()).padStart(3,"0");
+  el.innerHTML = `<span class="ts">${ts}</span><span class="type" style="color:${outgoing ? "#d29922" : "#58a6ff"}">${outgoing ? "→" : "←"} ${type}</span><span>${detail.length > 60 ? detail.slice(0,60) + "…" : detail}</span>`;
+  const logEl = document.getElementById("event-log");
+  logEl.prepend(el);
+  while (logEl.children.length > 30) logEl.removeChild(logEl.lastChild);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+connect();
+applyAngle(90);
+</script>
+</body>
+</html>
