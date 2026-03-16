@@ -452,7 +452,7 @@ function applyAngle(angle) {
   });
 
   const t = (angle - 90) / 90;
-  const speed = Math.round(4 - t * 3);
+  const speed = Math.round(20 - t * 17);
   document.getElementById("angle-sub").textContent =
     angle <= 90  ? `folded · ${speed} yr/s` :
     angle >= 180 ? `flat · ${speed} yr/s`   : `partial · ${speed} yr/s`;

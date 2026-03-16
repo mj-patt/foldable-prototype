@@ -169,7 +169,7 @@ function buildSpec() {
       {
         orient: "bottom", scale: "xscale",
         values: [500,1000,2000,4000,8000,16000,32000,64000,128000],
-        title: "GDP per capita", titleFontSize: 16, tickCount: 10, format: "~s", grid: true,
+        title: "GDP per capita", titleFontSize: 16, tickCount: 10, format: "~s", grid: true, titleAlign: "left", titleAnchor: "start",
         encode: {
           ticks:  { update: { stroke:  { value: "#1e2330" } } },
           labels: { update: { fill:    { value: "#4a5068" }, fontSize: { value: 16 } } },
@@ -253,7 +253,7 @@ document.getElementById("year-slider").addEventListener("input", (e) => {
 
 function getYearsPerSecond() {
   const t = Math.max(0, Math.min(1, (currentAngle - 90) / 90));
-  return 4 - t * 3;
+  return 20 - t * 17;
 }
 
 const tapOverlay = document.getElementById("tap-overlay");
@@ -290,7 +290,7 @@ function wsSend(obj) {
 
 function connect() {
   const host = location.hostname || "localhost";
-  ws = new WebSocket(`ws://${host}:${location.port || 3000}/ws`);
+  ws = new WebSocket(`ws://${host}:${location.port || 3003}/ws`);
 
   ws.onopen = () => wsSend({ type: "setYear", year: currentYear });
 

@@ -1,8 +1,8 @@
 /**
  * Foldable Prototype – WebSocket Relay Server
  * Start: node server.js
- * Serves static files from ./public on http://localhost:3000
- * WebSocket on ws://localhost:3000/ws
+ * Serves static files from ./public on http://localhost:3003
+ * WebSocket on ws://localhost:3003/ws
  */
 
 const http = require("http");
@@ -10,7 +10,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = 3000;
+const PORT = 3003;
 const PUBLIC = path.join(__dirname, "public");
 
 // Shared state broadcast to all clients
