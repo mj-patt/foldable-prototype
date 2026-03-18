@@ -162,7 +162,8 @@ function buildSpec() {
     scales: [
       { name: "xscale",     type: "log",     domain: [500, 128000],             range: "width",  nice: false, clamp: true },
       { name: "yscale",     type: "linear",  domain: [0, 90],                   range: "height", nice: true,  clamp: true },
-      { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [30, 3000], clamp: true },
+      // { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [30, 3000], clamp: true },
+      { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [10, 1000], clamp: true },
       { name: "colorscale", type: "ordinal", domain: [0,1,2,3],                 range: REGION_COLORS },
     ],
     axes: [
