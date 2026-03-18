@@ -140,7 +140,7 @@ function buildSpec() {
   return {
     $schema: "https://vega.github.io/schema/vega/v5.json",
     background: "transparent",
-    padding: { left: 2, right: 20, top: 10, bottom: 44 },
+    padding: { left: 56, right: 20, top: 10, bottom: 56 },
     // signals: [
     //   { name: "currentYear", value: currentYear },
     //   { name: "chartWidth",  update: "containerSize()[0]" },
@@ -153,7 +153,7 @@ function buildSpec() {
     ],
     width:    { signal: "chartWidth" },
     height:   { signal: "chartHeight" },
-    autosize: { type: "fit", contains: "padding" },
+    autosize: { type: "none", contains: "padding" },
     data: [
       { name: "gapminder", url: "gapminder_full.json", format: { type: "json" } },
       { name: "current", source: "gapminder",

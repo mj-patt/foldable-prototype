@@ -39,7 +39,7 @@
   #legend {
     position: fixed;
     bottom: 14px; left: 16px;
-    display: flex; flex-direction: row; gap: 38px;
+    display: flex; flex-direction: row;
     z-index: 10;
   }
 
@@ -48,6 +48,8 @@
     font-size: 10px; letter-spacing: 0.06em;
     color: var(--text-muted); text-transform: uppercase;
   }
+
+  .legend-item:not(:last-child) { margin-right: 38px; }
 
   .legend-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
 
@@ -98,11 +100,11 @@ const REGION_COLORS = ["#e8603c","#f5c842","#7ecba1","#5b9bd5"];
 
 function buildSpec() {
   const W = bootMode === "flat" ? window.innerWidth * 2 : window.innerWidth;
-const H = window.innerHeight;
+  const H = window.innerHeight;
   return {
     $schema: "https://vega.github.io/schema/vega/v5.json",
     background: "transparent",
-    padding: { left: 2, right: 20, top: 10, bottom: 44 },
+    padding: { left: 56, right: 20, top: 10, bottom: 56 },
     // signals: [
     //   { name: "currentYear", value: currentYear },
     //   { name: "chartWidth",  update: "containerSize()[0]" },
@@ -115,7 +117,7 @@ const H = window.innerHeight;
     ],
     width:    { signal: "chartWidth" },
     height:   { signal: "chartHeight" },
-    autosize: { type: "fit", contains: "padding" },
+    autosize: { type: "none", contains: "padding" },
     data: [
       { name: "gapminder", url: "gapminder_full.json", format: { type: "json" } },
       { name: "current", source: "gapminder",
