@@ -6,12 +6,15 @@
  */
 
 const http = require("http");
+const https = require("https");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = 3003;
+const PORT = Number(process.env.PORT || 3003);
 const PUBLIC = path.join(__dirname, "public");
+const TLS_KEY_PATH = process.env.TLS_KEY_PATH;
+const TLS_CERT_PATH = process.env.TLS_CERT_PATH;
 
 // Shared state broadcast to all clients
 let sharedState = {
@@ -131,7 +134,7 @@ const MIME = {
   ".svg": "image/svg+xml",
 };
 
-const server = http.createServer((req, res) => {
+function handleRequest(req, res) {
   const pathname = new URL(req.url, "http://localhost").pathname;
   let filePath = path.join(PUBLIC, pathname === "/" ? "index.html" : pathname);
   const ext = path.extname(filePath);
@@ -144,7 +147,25 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { "Content-Type": MIME[ext] || "text/plain" });
     res.end(data);
   });
-});
+}
+
+let server;
+let baseProtocol = "http";
+
+if (TLS_KEY_PATH && TLS_CERT_PATH) {
+  try {
+    const key = fs.readFileSync(TLS_KEY_PATH);
+    const cert = fs.readFileSync(TLS_CERT_PATH);
+    server = https.createServer({ key, cert }, handleRequest);
+    baseProtocol = "https";
+    console.log(`[TLS] HTTPS enabled using cert: ${TLS_CERT_PATH}`);
+  } catch (e) {
+    console.warn("[TLS] Failed to load cert/key, falling back to HTTP:", e.message);
+    server = http.createServer(handleRequest);
+  }
+} else {
+  server = http.createServer(handleRequest);
+}
 
 server.on("upgrade", (req, socket, head) => {
   if (req.url !== "/ws") {
@@ -258,11 +279,11 @@ function handleMessage(socket, msg) {
 server.listen(PORT, () => {
   console.log(`\n  Foldable Prototype Server`);
   console.log(`  ─────────────────────────`);
-  console.log(`  http://localhost:${PORT}/screen1.html  Phone 1 (scatterplot)`);
+  console.log(`  ${baseProtocol}://localhost:${PORT}/screen1.html  Phone 1 (scatterplot)`);
   console.log(
-    `  http://localhost:${PORT}/screen2.html  Phone 2 (control / right half)`
+    `  ${baseProtocol}://localhost:${PORT}/screen2.html  Phone 2 (control / right half)`
   );
   console.log(
-    `  http://localhost:${PORT}/wizard.html   wizard of oz control\n`
+    `  ${baseProtocol}://localhost:${PORT}/wizard.html   wizard of oz control\n`
   );
 });

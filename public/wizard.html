@@ -361,7 +361,8 @@ let currentAngle = 90;
 // WebSocket
 function connect() {
   const host = location.hostname || "localhost";
-  ws = new WebSocket(`ws://${host}:${location.port || 3003}/ws`);
+  const wsProto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${wsProto}://${host}:${location.port || 3003}/ws`);
 
   ws.onopen = () => wsSend({ type: "getState" });
 

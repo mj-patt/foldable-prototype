@@ -128,6 +128,7 @@ let currentMode     = bootMode;
 let currentAngle    = bootAngle;
 let vegaView2       = null;
 let tapHoldInterval = null;
+let tiltEnabled     = false;
 
 document.getElementById("year-slider").value = bootYear;
 document.getElementById("flat-year-hud").textContent = bootYear;
@@ -291,7 +292,8 @@ function wsSend(obj) {
 
 function connect() {
   const host = location.hostname || "localhost";
-  ws = new WebSocket(`ws://${host}:${location.port || 3003}/ws`);
+  const wsProto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${wsProto}://${host}:${location.port || 3003}/ws`);
 
   ws.onopen = () => wsSend({ type: "setYear", year: currentYear });
 
@@ -306,22 +308,19 @@ function connect() {
 
     else if (msg.type === "state") {
   currentAngle = msg.angle;
-  tiltEnabled = msg.tiltEnabled ?? false;
+  tiltEnabled = !!(msg.tiltEnabled ?? false);
   setYear(msg.year);
   applyMode(msg.mode, msg.angle);
 }
-    else if (msg.type === "setTiltEnabled") { tiltEnabled = msg.enabled; }
+    else if (msg.type === "setTiltEnabled") { tiltEnabled = !!msg.enabled; }
   };
 
   ws.onclose = () => setTimeout(connect, 2000);
   ws.onerror = () => ws.close();
 }
 
-//enable tilt auto detect
-let tiltEnabled = false;
-
 window.addEventListener("deviceorientation", (e) => {
-  if (!tiltEnabled || e.gamma ===null) return;
+  if (!tiltEnabled || !window.isSecureContext || e.gamma === null) return;
   wsSend({ type: "setTilt", screen: 2, gamma: Math.round(e.gamma) }); 
 }, true);
 
