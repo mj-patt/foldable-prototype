@@ -18,6 +18,9 @@ let sharedState = {
   year: 1800,
   mode: "folded", // "folded" | "flat"
   angle: 90, // fold angle in degrees (90 = folded, 180 = flat)
+  tilt1: 0, //for auto mode
+  tilt2: 0, // for auto mode
+  tiltEnabled: false,
 };
 
 // Active WebSocket clients
@@ -225,9 +228,30 @@ function handleMessage(socket, msg) {
       wsSend(socket, JSON.stringify({ type: "state", ...sharedState }));
       break;
 
-    default:
-      // Relay unknown messages to all other clients (for extensibility)
-      broadcast(msg, socket);
+    case "setTiltEnabled":
+      sharedState.tiltEnabled = !!msg.enabled;
+      broadcast({ type: "setTiltEnabled", enabled: sharedState.tiltEnabled });
+      if (sharedState.tiltEnabled) {
+        sharedState.angle = 180;
+        broadcast({ type: "angle", angle: 180 });
+      }
+      break;
+
+    case "setTilt": {
+      if (!sharedState.tiltEnabled) break;
+      if (msg.screen === 1) sharedState.tilt1 = msg.gamma;
+      if (msg.screen === 2) sharedState.tilt2 = msg.gamma;
+
+      const g1 = sharedState.tilt1;
+      const g2 = sharedState.tilt2;
+
+      // foldAngle = 180 - g1 + g2
+      // e.g. g1=50, g2=0 → 130°   g1=50, g2=-30 → 100°
+      const foldAngle = Math.round(Math.max(0, Math.min(180, 180 - g1 + g2)));
+      sharedState.angle = foldAngle;
+      broadcast({ type: "angle", angle: foldAngle, tilt1: g1, tilt2: g2 });
+      break;
+    }
   }
 }
 

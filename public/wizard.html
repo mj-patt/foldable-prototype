@@ -306,6 +306,14 @@
       <button class="preset-btn" onclick="setAngle(150)">150°</button>
       <button class="preset-btn" onclick="setAngle(180)">180°</button>
     </div>
+    <div class="tilt-button">
+      <button class="preset-btn" id="btn-tilt" onclick="toggleTilt()" style="margin-top:10px; width:100%;">tilt sensor: off</button>
+      <div style="margin-top:10px; font-size:10px; color:var(--muted); letter-spacing:0.06em;">
+        <span>S1 tilt: <span id="tilt1-val">—</span>°</span>
+           &nbsp;&nbsp;
+        <span>S2 tilt: <span id="tilt2-val">—</span>°</span>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -353,7 +361,7 @@ let currentAngle = 90;
 // WebSocket
 function connect() {
   const host = location.hostname || "localhost";
-  ws = new WebSocket(`ws://${host}:${location.port || 3000}/ws`);
+  ws = new WebSocket(`ws://${host}:${location.port || 3003}/ws`);
 
   ws.onopen = () => wsSend({ type: "getState" });
 
@@ -362,7 +370,12 @@ function connect() {
     if      (msg.type === "state") { applyYear(msg.year); applyMode(msg.mode, msg.angle); }
     else if (msg.type === "year")  { applyYear(msg.year); }
     else if (msg.type === "mode")  { applyMode(msg.mode, msg.angle); }
-    else if (msg.type === "angle") { applyAngle(msg.angle); }
+    // else if (msg.type === "angle") { applyAngle(msg.angle); }
+    else if (msg.type === "angle") {
+    applyAngle(msg.angle);
+    if (msg.tilt1 !== undefined) document.getElementById("tilt1-val").textContent = msg.tilt1;
+    if (msg.tilt2 !== undefined) document.getElementById("tilt2-val").textContent = msg.tilt2;
+    }
     log(msg.type, JSON.stringify(msg));
   };
 
@@ -401,7 +414,7 @@ let holdInterval = null;
 
 function startHold(direction) {
   stopHold();
-  const msPerYear = 1000 / (4 - ((currentAngle - 90) / 90) * 3);
+  const msPerYear = 1000 / (20 - ((currentAngle - 90) / 90) * 17);
   holdInterval = setInterval(() => {
     const y = Math.max(1800, Math.min(2023, currentYear + direction));
     applyYear(y);
@@ -458,6 +471,22 @@ function applyAngle(angle) {
     angle >= 180 ? `flat · ${speed} yr/s`   : `partial · ${speed} yr/s`;
 }
 
+//angle auto detection
+let tiltEnabled = false;
+
+function toggleTilt() {
+  tiltEnabled = !tiltEnabled;
+  document.getElementById("btn-tilt").textContent = `tilt sensor: ${tiltEnabled ? "on" : "off"}`;
+  document.getElementById("btn-tilt").classList.toggle("active", tiltEnabled);
+  wsSend({ type: "setTiltEnabled", enabled: tiltEnabled });
+  // When enabling tilt, push screens to flat so tilt control takes effect immediately.
+  // When disabling, return to folded/90° default.
+  if (tiltEnabled) {
+    wsSend({ type: "setMode", mode: "flat", angle: 180 });
+  } else {
+    wsSend({ type: "setMode", mode: "folded", angle: 90 });
+  }
+}
 // Log 
 function log(type, detail, outgoing = false) {
   const el = document.createElement("div");

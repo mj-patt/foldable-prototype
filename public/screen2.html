@@ -299,17 +299,32 @@ function connect() {
     const msg = JSON.parse(e.data);
     if      (msg.type === "year")  { setYear(msg.year); }
     else if (msg.type === "angle") { currentAngle = msg.angle; }
-    else if (msg.type === "mode")  { applyMode(msg.mode, msg.angle); }
+    else if (msg.type === "mode") { 
+  console.log("mode message received:", msg.mode, "current:", currentMode);
+  applyMode(msg.mode, msg.angle); 
+}
+
     else if (msg.type === "state") {
-      currentAngle = msg.angle;
-      setYear(msg.year);
-      applyMode(msg.mode, msg.angle);
-    }
+  currentAngle = msg.angle;
+  tiltEnabled = msg.tiltEnabled ?? false;
+  setYear(msg.year);
+  applyMode(msg.mode, msg.angle);
+}
+    else if (msg.type === "setTiltEnabled") { tiltEnabled = msg.enabled; }
   };
 
   ws.onclose = () => setTimeout(connect, 2000);
   ws.onerror = () => ws.close();
 }
+
+//enable tilt auto detect
+let tiltEnabled = false;
+
+window.addEventListener("deviceorientation", (e) => {
+  if (!tiltEnabled || e.gamma ===null) return;
+  wsSend({ type: "setTilt", screen: 2, gamma: Math.round(e.gamma) }); 
+}, true);
+
 
 let resizeTimer;
 window.addEventListener("resize", () => {
