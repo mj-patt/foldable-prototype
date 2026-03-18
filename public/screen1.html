@@ -45,13 +45,16 @@
 
   .legend-item {
     display: flex; align-items: center; gap: 6px;
-    font-size: 10px; letter-spacing: 0.06em;
+    /* font-size: 10px; letter-spacing: 0.06em; */
+    font-size: 5px; letter-spacing: 0.06em;
     color: var(--text-muted); text-transform: uppercase;
   }
 
   .legend-item:not(:last-child) { margin-right: 38px; }
 
-  .legend-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
+  /* .legend-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; } */
+   .legend-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  
 
   #tap-overlay {
     display: none; position: fixed; inset: 0;
@@ -126,7 +129,8 @@ function buildSpec() {
     scales: [
       { name: "xscale",     type: "log",     domain: [500, 128000],             range: "width",  nice: false, clamp: true },
       { name: "yscale",     type: "linear",  domain: [0, 90],                   range: "height", nice: true,  clamp: true },
-      { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [30, 3000], clamp: true },
+      // { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [30, 3000], clamp: true },
+      { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [10, 1000], clamp: true },
       { name: "colorscale", type: "ordinal", domain: [0,1,2,3],                 range: REGION_COLORS },
     ],
     axes: [
