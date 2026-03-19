@@ -10,6 +10,8 @@
 
   :root {
     --bg: #ffffff;
+    --asia: #7ecba1;
+  --europe: #5b9bd5;
   }
 
   html, body {
@@ -93,6 +95,27 @@
     color: rgba(230,237,243,0.5); letter-spacing: -0.02em;
     pointer-events: none; z-index: 30;
   }
+
+  #legend-s2 {
+  position: fixed;
+  bottom: 14px; left: 16px;
+  display: none;
+  flex-direction: row;
+  z-index: 10;
+}
+
+body.mode-flat #legend-s2 { display: flex; }
+body.mode-fold #legend-s2 { display: none; }
+
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 15px; letter-spacing: 0.06em;
+  color: #7d8590; text-transform: uppercase;
+}
+
+.legend-item:not(:last-child) { margin-right: 38px; }
+
+.legend-dot { width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -113,6 +136,10 @@
     <div id="tap-ripple"></div>
   </div>
   <div id="flat-year-hud">1800</div>
+  <div id="legend-s2">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--asia)"></div>Asia</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--europe)"></div>Europe</div>
+  </div>
 </div>
 
 <script>

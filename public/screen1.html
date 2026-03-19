@@ -46,15 +46,17 @@
   .legend-item {
     display: flex; align-items: center; gap: 6px;
     /* font-size: 10px; letter-spacing: 0.06em; */
-    font-size: 5px; letter-spacing: 0.06em;
+    font-size: 8px; letter-spacing: 0.06em;
     color: var(--text-muted); text-transform: uppercase;
   }
 
   .legend-item:not(:last-child) { margin-right: 38px; }
 
-  /* .legend-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; } */
-   .legend-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  
+  body.mode-flat .legend-item { font-size: 15px; }
+  body.mode-flat .legend-dot { width: 15px; height: 15px; } 
 
   #tap-overlay {
     display: none; position: fixed; inset: 0;
@@ -63,6 +65,8 @@
   }
 
   body.mode-flat #tap-overlay { display: block; }
+  body.mode-flat #legend-asia,
+body.mode-flat #legend-europe { display: none; }
 
   #tap-ripple {
     position: absolute; width: 60px; height: 60px; border-radius: 50%;
@@ -79,8 +83,8 @@
 <div id="legend">
   <div class="legend-item"><div class="legend-dot" style="background:var(--africa)"></div>Africa</div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--americas)"></div>Americas</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--asia)"></div>Asia</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--europe)"></div>Europe</div>
+  <div class="legend-item" id="legend-asia"><div class="legend-dot" style="background:var(--asia)"></div>Asia</div>
+  <div class="legend-item" id="legend-europe"><div class="legend-dot" style="background:var(--europe)"></div>Europe</div>
 </div>
 
 <div id="tap-overlay"><div id="tap-ripple"></div></div>
