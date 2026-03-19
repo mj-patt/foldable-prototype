@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Screen 1 – Gapminder</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --text-muted: #7d8590;
+    --africa: #e8603c;
+    --americas: #f5c842;
+    --asia: #7ecba1;
+    --europe: #5b9bd5;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+
+  #chart-wrap {
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  body.mode-folded #chart-wrap { width: 100vw; }
+  body.mode-flat   #chart-wrap { width: 200vw; }
+
+  #chart { width: 100%; height: 100%; }
+
+  #legend {
+    position: fixed;
+    bottom: 14px; left: 16px;
+    display: flex; flex-direction: row;
+    z-index: 10;
+  }
+
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    /* font-size: 10px; letter-spacing: 0.06em; */
+    font-size: 8px; letter-spacing: 0.06em;
+    color: var(--text-muted); text-transform: uppercase;
+  }
+
+  .legend-item:not(:last-child) { margin-right: 38px; }
+
+  
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  
+  body.mode-flat .legend-item { font-size: 15px; }
+  body.mode-flat .legend-dot { width: 15px; height: 15px; } 
+
+  #tap-overlay {
+    display: none; position: fixed; inset: 0;
+    z-index: 30; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body.mode-flat #tap-overlay { display: block; }
+  body.mode-flat #legend-asia,
+body.mode-flat #legend-europe { display: none; }
+
+  #tap-ripple {
+    position: absolute; width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3);
+    transform: translate(-50%,-50%) scale(0); pointer-events: none;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out; opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="chart-wrap"><div id="chart"></div></div>
+
+<div id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--africa)"></div>Africa</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--americas)"></div>Americas</div>
+  <div class="legend-item" id="legend-asia"><div class="legend-dot" style="background:var(--asia)"></div>Asia</div>
+  <div class="legend-item" id="legend-europe"><div class="legend-dot" style="background:var(--europe)"></div>Europe</div>
+</div>
+
+<div id="tap-overlay"><div id="tap-ripple"></div></div>
+
+<script>
+const params     = new URLSearchParams(location.search);
+const bootMode   = params.get("mode")  || "folded";
+const bootYear   = parseInt(params.get("year")  || "1800");
+const bootAngle  = parseInt(params.get("angle") || (bootMode === "flat" ? "180" : "90"));
+
+document.body.classList.add("mode-" + bootMode);
+
+let currentYear     = bootYear;
+let currentMode     = bootMode;
+let currentAngle    = bootAngle;
+let vegaView        = null;
+let tapHoldInterval = null;
+let tiltEnabled     = false;
+
+const REGION_COLORS = ["#e8603c","#f5c842","#7ecba1","#5b9bd5"];
+
+function buildSpec() {
+  const W = bootMode === "flat" ? window.innerWidth * 2 : window.innerWidth;
+  const H = window.innerHeight;
+  return {
+    $schema: "https://vega.github.io/schema/vega/v5.json",
+    background: "transparent",
+    padding: { left: 56, right: 20, top: 10, bottom: 56 },
+    // signals: [
+    //   { name: "currentYear", value: currentYear },
+    //   { name: "chartWidth",  update: "containerSize()[0]" },
+    //   { name: "chartHeight", update: "containerSize()[1]" },
+    // ],
+    signals: [
+      { name: "currentYear", value: currentYear },
+      { name: "chartWidth",  value: W },
+      { name: "chartHeight", value: H },
+    ],
+    width:    { signal: "chartWidth" },
+    height:   { signal: "chartHeight" },
+    autosize: { type: "none", contains: "padding" },
+    data: [
+      { name: "gapminder", url: "gapminder_full.json", format: { type: "json" } },
+      { name: "current", source: "gapminder",
+        transform: [{ type: "filter", expr: "datum.year === currentYear" }] },
+    ],
+    scales: [
+      { name: "xscale",     type: "log",     domain: [500, 128000],             range: "width",  nice: false, clamp: true },
+      { name: "yscale",     type: "linear",  domain: [0, 90],                   range: "height", nice: true,  clamp: true },
+      // { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [30, 3000], clamp: true },
+      { name: "sizescale",  type: "pow",     exponent: 0.5, domain: [10000, 1500000000], range: [10, 1000], clamp: true },
+      { name: "colorscale", type: "ordinal", domain: [0,1,2,3],                 range: REGION_COLORS },
+    ],
+    axes: [
+      {
+        orient: "bottom", scale: "xscale",
+        values: [500,1000,2000,4000,8000,16000,32000,64000,128000],
+        title: "GDP per capita", titleFontSize: 16, tickCount: 10, format: "~s", grid: true, titleAlign: "left", titleAnchor: "start", titleX: 900,
+        encode: {
+          ticks:  { update: { stroke:  { value: "#1e2330" } } },
+          labels: { update: { fill:    { value: "#4a5068" }, fontSize: { value: 16 } } },
+          grid:   { update: { stroke:  { value: "#1a1e28" }, strokeWidth: { value: 1 }, opacity: { value: 0.2 } } },
+          domain: { update: { stroke:  { value: "#1e2330" } } },
+        },
+      },
+      {
+        orient: "left", scale: "yscale",
+        title: "Life expectancy", titleFontSize: 16, tickCount: 6, grid: true,
+        encode: {
+          ticks:  { update: { stroke:  { value: "#1e2330" } } },
+          labels: { update: { fill:    { value: "#4a5068" }, fontSize: { value: 16 } } },
+          grid:   { update: { stroke:  { value: "#1a1e28" }, strokeWidth: { value: 1 }, opacity: { value: 0.2 } } },
+          domain: { update: { stroke:  { value: "#1e2330" } } },
+        },
+      },
+    ],
+    marks: [
+      {
+        type: "text",
+        encode: { update: {
+          text:        { signal: "currentYear" },
+          x:           { signal: "chartWidth / 2" },
+          y:           { signal: "chartHeight / 2" },
+          align:       { value: "center" },
+          baseline:    { value: "middle" },
+          fontSize:    { signal: "min(chartWidth, chartHeight) * 0.28" },
+          fontWeight:  { value: "500" },
+          fill:        { value: "#000000" },
+          fillOpacity: { value: 0.06 },
+        }},
+      },
+      {
+        type: "symbol", from: { data: "current" },
+        encode: {
+          enter:  { fillOpacity: { value: 0.82 }, strokeWidth: { value: 0.5 } },
+          update: {
+            x:             { scale: "xscale",     field: "gdp" },
+            y:             { scale: "yscale",     field: "life_expect" },
+            size:          { scale: "sizescale",  field: "pop" },
+            fill:          { scale: "colorscale", field: "cluster" },
+            stroke:        { scale: "colorscale", field: "cluster" },
+            strokeOpacity: { value: 0.4 },
+            tooltip: { signal: "{'Country': datum.name, 'Year': datum.year, 'GDP per capita': '$' + format(datum.gdp, ',.0f'), 'Life expectancy': datum.life_expect + ' yrs', 'Population': format(datum.pop, ',.0f'), 'Region': datum.region}" },
+          },
+          hover: { fillOpacity: { value: 1 }, strokeWidth: { value: 2 }, strokeOpacity: { value: 1 } },
+        },
+      },
+    ],
+  };
+}
+
+function initVega() {
+  const runtime = vega.parse(buildSpec());
+  vegaView = new vega.View(runtime)
+    .renderer("canvas")
+    .initialize("#chart")
+    .hover()
+    .run();
+}
+
+function setYear(year) {
+  currentYear = Math.max(1800, Math.min(2023, Math.round(year)));
+  if (vegaView) vegaView.signal("currentYear", currentYear).runAsync();
+}
+
+function applyMode(mode, angle) {
+  if (mode === currentMode) return;
+  const p = new URLSearchParams({ mode, year: currentYear, angle: angle ?? (mode === "flat" ? 180 : 90) });
+  location.replace("screen1.html?" + p.toString());
+}
+
+function getYearsPerSecond() {
+  const t = Math.max(0, Math.min(1, (currentAngle - 90) / 90));
+  return 20 - t * 17;
+}
+
+const tapOverlay = document.getElementById("tap-overlay");
+const tapRipple  = document.getElementById("tap-ripple");
+
+function showRipple(x, y) {
+  tapRipple.style.left = x + "px"; tapRipple.style.top = y + "px";
+  tapRipple.style.transform = "translate(-50%,-50%) scale(0)"; tapRipple.style.opacity = "0.8";
+  void tapRipple.offsetWidth;
+  tapRipple.style.transform = "translate(-50%,-50%) scale(1)"; tapRipple.style.opacity = "0";
+}
+
+// function startTapHold(x, y) {
+//   showRipple(x, y);
+//   const msPerYear = 1000 / getYearsPerSecond();
+//   tapHoldInterval = setInterval(() => {
+//     const y = currentYear - 1;
+//     if (y >= 1800) { setYear(y); wsSend({ type: "setYear", year: y }); }
+//   }, msPerYear);
+// }
+
+// function stopTapHold() { clearInterval(tapHoldInterval); tapHoldInterval = null; }
+
+function startTapHold(x, y) {
+  showRipple(x, y);
+  function tick() {
+    const yr = currentYear - 1;
+    if (yr >= 1800) { setYear(yr); wsSend({ type: "setYear", year: yr }); }
+    tapHoldInterval = setTimeout(tick, 1000 / getYearsPerSecond());
+  }
+  tapHoldInterval = setTimeout(tick, 1000 / getYearsPerSecond());
+}
+
+function stopTapHold() { clearTimeout(tapHoldInterval); tapHoldInterval = null; }
+
+
+tapOverlay.addEventListener("pointerdown",   (e) => { e.preventDefault(); startTapHold(e.clientX, e.clientY); });
+tapOverlay.addEventListener("pointerup",     stopTapHold);
+tapOverlay.addEventListener("pointerleave",  stopTapHold);
+tapOverlay.addEventListener("pointercancel", stopTapHold);
+
+let ws = null;
+
+function wsSend(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function connect() {
+  const host = location.hostname || "localhost";
+  const wsProto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${wsProto}://${host}:${location.port || 3003}/ws`);
+
+  ws.onopen = () => wsSend({ type: "setYear", year: currentYear });
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if      (msg.type === "year")  { setYear(msg.year); }
+    else if (msg.type === "angle") { currentAngle = msg.angle; }
+    else if (msg.type === "mode") { 
+  console.log("mode message received:", msg.mode, "current:", currentMode);
+  applyMode(msg.mode, msg.angle); 
+}
+ 
+    else if (msg.type === "state") {
+  currentAngle = msg.angle;
+  tiltEnabled = !!(msg.tiltEnabled ?? false);
+  setYear(msg.year);
+  applyMode(msg.mode, msg.angle);
+}
+    else if (msg.type === "setTiltEnabled") { tiltEnabled = !!msg.enabled; }
+  };
+
+  ws.onclose = () => setTimeout(connect, 2000);
+  ws.onerror = () => ws.close();
+}
+
+
+window.addEventListener("deviceorientation", (e) => {
+  if (!tiltEnabled || !window.isSecureContext || e.gamma == null) return;
+  wsSend({ type: "setTilt", screen: 1, gamma: Math.round(e.gamma) }); 
+}, true);
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => vegaView && vegaView.resize().run(), 100);
+});
+
+initVega();
+connect();
+</script>
+</body>
+</html>
