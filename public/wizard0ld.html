@@ -480,8 +480,13 @@ function toggleTilt() {
   document.getElementById("btn-tilt").textContent = `tilt sensor: ${tiltEnabled ? "on" : "off"}`;
   document.getElementById("btn-tilt").classList.toggle("active", tiltEnabled);
   wsSend({ type: "setTiltEnabled", enabled: tiltEnabled });
-  // Mode is now determined solely by tilt readings (g2) when tilt is enabled.
-  // No forced mode change here — wizard buttons retain control when tilt is off.
+  // When enabling tilt, push screens to flat so tilt control takes effect immediately.
+  // When disabling, return to folded/90° default.
+  if (tiltEnabled) {
+    wsSend({ type: "setMode", mode: "flat", angle: 180 });
+  } else {
+    wsSend({ type: "setMode", mode: "folded", angle: 90 });
+  }
 }
 // Log 
 function log(type, detail, outgoing = false) {
