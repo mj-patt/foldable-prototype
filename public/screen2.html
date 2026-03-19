@@ -268,16 +268,28 @@ function showRipple(x, y) {
   tapRipple.style.transform = "translate(-50%,-50%) scale(1)"; tapRipple.style.opacity = "0";
 }
 
+// function startTapHold(x, y) {
+//   showRipple(x, y);
+//   const msPerYear = 1000 / getYearsPerSecond();
+//   tapHoldInterval = setInterval(() => {
+//     const y = currentYear + 1;
+//     if (y <= 2023) { setYear(y); wsSend({ type: "setYear", year: y }); }
+//   }, msPerYear);
+// }
+
+// function stopTapHold() { clearInterval(tapHoldInterval); tapHoldInterval = null; }
+
 function startTapHold(x, y) {
   showRipple(x, y);
-  const msPerYear = 1000 / getYearsPerSecond();
-  tapHoldInterval = setInterval(() => {
-    const y = currentYear + 1;
-    if (y <= 2023) { setYear(y); wsSend({ type: "setYear", year: y }); }
-  }, msPerYear);
+  function tick() {
+    const yr = currentYear + 1;
+    if (yr <= 2023) { setYear(yr); wsSend({ type: "setYear", year: yr }); }
+    tapHoldInterval = setTimeout(tick, 1000 / getYearsPerSecond());
+  }
+  tapHoldInterval = setTimeout(tick, 1000 / getYearsPerSecond());
 }
 
-function stopTapHold() { clearInterval(tapHoldInterval); tapHoldInterval = null; }
+function stopTapHold() { clearTimeout(tapHoldInterval); tapHoldInterval = null; }
 
 tapOverlay.addEventListener("pointerdown",   (e) => { e.preventDefault(); startTapHold(e.clientX, e.clientY); });
 tapOverlay.addEventListener("pointerup",     stopTapHold);
