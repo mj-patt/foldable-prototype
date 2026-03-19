@@ -252,7 +252,10 @@ function handleMessage(socket, msg) {
     case "setTiltEnabled":
       sharedState.tiltEnabled = !!msg.enabled;
       broadcast({ type: "setTiltEnabled", enabled: sharedState.tiltEnabled });
-      // No forced mode change — tilt readings will determine mode dynamically
+      if (sharedState.tiltEnabled) {
+        sharedState.angle = 180;
+        broadcast({ type: "angle", angle: 180 });
+      }
       break;
 
     case "setTilt": {
@@ -263,26 +266,11 @@ function handleMessage(socket, msg) {
       const g1 = sharedState.tilt1;
       const g2 = sharedState.tilt2;
 
-      // Mode derived solely from g2:
-      // g2 > 10  → phone 2 tilted backward → folded
-      // g2 <= 10 → phones roughly co-planar → flat
-      const newMode = g2 > 10 ? "folded" : "flat";
-      const prevMode = sharedState.mode;
-
-      if (newMode === "flat") {
-        // In flat mode only: compute fold angle for year-change speed control
-        // foldAngle = 180 - g1 + g2
-        const foldAngle = Math.round(Math.max(0, Math.min(180, 180 - g1 + g2)));
-        sharedState.angle = foldAngle;
-        broadcast({ type: "angle", angle: foldAngle, tilt1: g1, tilt2: g2 });
-      }
-
-      // Broadcast mode only if it changed to avoid unnecessary page reloads
-      if (newMode !== prevMode) {
-        sharedState.mode = newMode;
-        sharedState.angle = newMode === "flat" ? 180 : 90;
-        broadcast({ type: "mode", mode: newMode, angle: sharedState.angle });
-      }
+      // foldAngle = 180 - g1 + g2
+      // e.g. g1=50, g2=0 → 130°   g1=50, g2=-30 → 100°
+      const foldAngle = Math.round(Math.max(0, Math.min(180, 180 - g1 + g2)));
+      sharedState.angle = foldAngle;
+      broadcast({ type: "angle", angle: foldAngle, tilt1: g1, tilt2: g2 });
       break;
     }
   }
